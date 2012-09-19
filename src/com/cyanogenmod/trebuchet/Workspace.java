@@ -1172,7 +1172,9 @@ public class Workspace extends PagedView
 
     class WallpaperOffsetInterpolator {
         float mFinalHorizontalWallpaperOffset = 0.0f;
+        float mFinalVerticalWallpaperOffset = 0.0f;
         float mHorizontalWallpaperOffset = 0.0f;
+        float mVerticalWallpaperOffset = 0.0f;
         long mLastWallpaperOffsetUpdateTime;
         boolean mIsMovingFast;
         boolean mOverrideHorizontalCatchupConstant;
