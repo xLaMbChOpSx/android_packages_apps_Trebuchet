@@ -1,6 +1,6 @@
-
 /*
  * Copyright (C) 2008 The Android Open Source Project
+ * This code has been modified. Portions copyright (C) 2012, ParanoidAndroid Project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -334,6 +334,24 @@ public final class Launcher extends Activity
         int cellY;
     }
 
+    boolean mIsAbsent = false;
+
+    private void fadeColors(int speed, boolean stockColors) {
+        String[] launcherColors = ExtendedPropertiesUtils.mGlobalHook.colors;
+        for (int i = 0; i < 5; i++) {
+            String setting = Settings.System.getString(getContentResolver(),
+                ExtendedPropertiesUtils.PARANOID_COLORS_SETTINGS[i]);
+
+            String[] colors = (setting == null || setting.equals("") ?
+                "00000000|00000000|0" : setting).split(
+                ExtendedPropertiesUtils.PARANOID_STRING_DELIMITER);
+
+            Settings.System.putString(getContentResolver(),
+                ExtendedPropertiesUtils.PARANOID_COLORS_SETTINGS[i], 
+                colors[0] + "|" + (stockColors ? "00000000" : launcherColors[i]) +
+                "|1|"+String.valueOf(speed));
+        }
+    }
 
     private boolean doesFileExist(String filename) {
         FileInputStream fis;
@@ -350,6 +368,9 @@ public final class Launcher extends Activity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        mIsAbsent = false;
+        fadeColors(500, false);
+
         // Listen for expanded desktop
         getContentResolver().registerContentObserver(
                 Settings.System.getUriFor(Settings.System.EXPANDED_DESKTOP_STATE),
@@ -462,6 +483,8 @@ public final class Launcher extends Activity
     }
 
     protected void onUserLeaveHint() {
+        mIsAbsent = true;
+
         super.onUserLeaveHint();
         sPausedFromUserAction = true;
     }
@@ -1307,6 +1330,15 @@ public final class Launcher extends Activity
         // you're in All Apps and click home to go to the workspace. onWindowVisibilityChanged
         // is a more appropriate event to handle
         if (mVisible) {
+
+            if (mIsAbsent) {
+                mIsAbsent = false;
+                if (mState == State.WORKSPACE)
+                    fadeColors(500, false);
+                else if (mState == State.APPS_CUSTOMIZE)
+                    fadeColors(500, true);
+            }
+
             mAppsCustomizeTabHost.onWindowVisible();
             if (!mWorkspaceLoading) {
                 final ViewTreeObserver observer = mWorkspace.getViewTreeObserver();
@@ -1988,19 +2020,6 @@ public final class Launcher extends Activity
         Object tag = v.getTag();
         if (tag instanceof ShortcutInfo) {
             if (((ShortcutInfo) tag).itemType == LauncherSettings.Favorites.ITEM_TYPE_ALLAPPS) {
-            // Fade bars back to default in 250ms
-            for (int i = 0; i < 5; i++) {
-                String setting = Settings.System.getString(getContentResolver(),
-                    ExtendedPropertiesUtils.PARANOID_COLORS_SETTINGS[i]);
-
-                String[] colors = (setting == null || setting.equals("") ?
-                    "00000000|00000000|0" : setting).split(
-                    ExtendedPropertiesUtils.PARANOID_STRING_DELIMITER);
-
-                Settings.System.putString(getContentResolver(),
-                        ExtendedPropertiesUtils.PARANOID_COLORS_SETTINGS[i], 
-                        colors[0] + "|" + "00000000|1|250");
-            }
                 showAllApps(true);
             } else {
                 // Open shortcut
@@ -2910,24 +2929,8 @@ public final class Launcher extends Activity
     }
 
     void showWorkspace(boolean animated) {
-        if (mState == State.APPS_CUSTOMIZE){
-            // Fade bars back to Launcher-color in 250ms
-            String[] launcherColors = ExtendedPropertiesUtils.mGlobalHook.colors;
-
-            for (int i=0; i < 5; i++) {
-                String setting = Settings.System.getString(getContentResolver(),
-                        ExtendedPropertiesUtils.PARANOID_COLORS_SETTINGS[i]);
-                String[] colors = (setting == null || setting.equals("")  ?
-                    "00000000|00000000|0" : setting).split(
-                    ExtendedPropertiesUtils.PARANOID_STRING_DELIMITER);
-
-                String newColor = launcherColors.length == 5 ? 
-                        launcherColors[i] : "00000000";
-                Settings.System.putString(getContentResolver(),
-                        ExtendedPropertiesUtils.PARANOID_COLORS_SETTINGS[i], 
-                        colors[0] + "|" + newColor + "|1|250");
-            }
-        }
+        mIsAbsent = false;
+        fadeColors(800, false);
         showWorkspace(animated, null);
     }
 
@@ -2962,6 +2965,9 @@ public final class Launcher extends Activity
     }
 
     void showAllApps(boolean animated) {
+        mIsAbsent = false;
+        fadeColors(250, true);
+
         if (mState != State.WORKSPACE) return;
 
         showAppsCustomizeHelper(animated, false);
