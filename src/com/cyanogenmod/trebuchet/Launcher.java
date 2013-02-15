@@ -2554,8 +2554,10 @@ public final class Launcher extends Activity
     }
 
     private void setWorkspaceBackground(boolean workspace) {
-        mLauncherView.setBackground(workspace ?
-                mWorkspaceBackgroundDrawable : mBlackBackgroundDrawable);
+        if (mLauncherView != null) {
+            mLauncherView.setBackground(workspace ?
+                    mWorkspaceBackgroundDrawable : mBlackBackgroundDrawable);
+        }
     }
 
     void updateWallpaperVisibility(boolean visible) {
