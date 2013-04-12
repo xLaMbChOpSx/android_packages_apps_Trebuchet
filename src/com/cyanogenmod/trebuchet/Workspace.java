@@ -286,7 +286,9 @@ public class Workspace extends PagedView
         Stack,
         Accordion,
         CylinderIn,
-        CylinderOut
+        CylinderOut,
+        CarouselLeft,
+        CarouselRight
     }
     private TransitionEffect mTransitionEffect = TransitionEffect.Standard;
 
@@ -1661,6 +1663,26 @@ public class Workspace extends PagedView
         }
     }
 
+    private void screenScrolledCarousel(int screenScroll, boolean left) {
+        for (int i = 0; i < getChildCount(); i++) {
+            CellLayout cl = (CellLayout) getPageAt(i);
+            if (cl != null) {
+                float scrollProgress = getScrollProgress(screenScroll, cl, i);
+                float rotation = 90.0f * -scrollProgress;
+
+                cl.setCameraDistance(mDensity * mCameraDistance);
+                cl.setTranslationX(cl.getMeasuredWidth() * scrollProgress);
+                cl.setPivotX(left ? 0f : cl.getMeasuredWidth());
+                cl.setPivotY(cl.getMeasuredHeight() / 2);
+                cl.setRotationY(rotation);
+
+                if (mFadeInAdjacentScreens && !isSmall()) {
+                    setCellLayoutFadeAdjacent(cl, scrollProgress);
+                }
+            }
+        }
+    }
+
     @Override
     protected void screenScrolled(int screenScroll) {
         super.screenScrolled(screenScroll);
@@ -1738,6 +1760,12 @@ public class Workspace extends PagedView
                         break;
                     case CylinderOut:
                         screenScrolledCylinder(scroll, false);
+                        break;
+                    case CarouselLeft:
+                        screenScrolledCarousel(scroll, true);
+                        break;
+                    case CarouselRight:
+                        screenScrolledCarousel(scroll, false);
                         break;
                 }
                 mScrollTransformsDirty = false;
@@ -2242,6 +2270,15 @@ public class Workspace extends PagedView
                     rotationY = mTransitionEffect == TransitionEffect.CylinderOut ? -WORKSPACE_ROTATION : WORKSPACE_ROTATION;
                 } else if (i > mCurrentPage) {
                     rotationY = mTransitionEffect == TransitionEffect.CylinderOut ? WORKSPACE_ROTATION : -WORKSPACE_ROTATION;
+                }
+            }
+
+            // Carousel Effects
+            if (mTransitionEffect == TransitionEffect.CarouselLeft || mTransitionEffect == TransitionEffect.CarouselRight && stateIsNormal) {
+                if (i < mCurrentPage) {
+                    rotationY = 90.0f;
+                } else if (i > mCurrentPage) {
+                    rotationY = -90.0f;
                 }
             }
 
